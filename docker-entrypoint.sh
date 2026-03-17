@@ -9,8 +9,8 @@ echo "======================================"
 echo "⏳ Waiting for MySQL at ${DB_HOST:-localhost}:${DB_PORT:-3306}..."
 MAX_TRIES=60
 COUNT=0
-until mysql -h "${DB_HOST:-localhost}" -P "${DB_PORT:-3306}" \
-      -u "${DB_USER:-root}" -p"${DB_PASS:-}" \
+until mysql -h "${MYSQLHOST:-localhost}" -P "${MYSQLPORT:-3306}" \
+      -u "${MYSQLUSER:-root}" -p"${MYSQLPASSWORD:-}" \
       -e "SELECT 1" > /dev/null 2>&1; do
   COUNT=$((COUNT+1))
   if [ $COUNT -ge $MAX_TRIES ]; then
