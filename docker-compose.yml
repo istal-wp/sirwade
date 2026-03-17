@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      - MYSQLHOST=db
+      - MYSQLPORT=3306
+      - MYSQLUSER=loogistics
+      - MYSQLPASSWORD=loogistics_pass
+      - MYSQLDATABASE=loogistics
+      - APP_ENV=development
+    volumes:
+      # Live-reload for local dev (comment out for prod-like testing)
+      - .:/var/www/html
+      - uploads_data:/var/www/html/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: loogistics
+      MYSQL_USER: loogistics
+      MYSQL_PASSWORD: loogistics_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./loogistics.sql:/docker-entrypoint-initdb.d/loogistics.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "loogistics", "-ploogistics_pass"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  uploads_data:

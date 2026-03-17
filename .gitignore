@@ -1,0 +1,24 @@
+# Environment
+.env
+.env.local
+
+# Uploads (user-generated content - don't commit)
+uploads/resumes/*
+!uploads/resumes/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Build artifacts
+*.cache

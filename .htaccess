@@ -1,0 +1,49 @@
+Options -Indexes +FollowSymLinks
+
+RewriteEngine On
+
+# ── Force HTTPS on Railway ───────────────────────────────────
+# Railway terminates SSL at the proxy level — trust X-Forwarded-Proto
+RewriteCond %{HTTP:X-Forwarded-Proto} =http [NC]
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# ── Security Headers ─────────────────────────────────────────
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# ── Deny direct access to sensitive files ────────────────────
+<FilesMatch "\.(sql|log|env|sh|md|json|lock)$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "^(docker-entrypoint|Dockerfile|railway\.toml|nixpacks\.toml|\.env)">
+    Require all denied
+</FilesMatch>
+
+# ── Deny access to hidden files (.git, .env, etc.) ───────────
+RewriteRule ^\.(?!well-known) - [F,L]
+
+# ── Block direct access to /api without session ──────────────
+# (API files handle their own auth checks)
+
+# ── Cache static assets ──────────────────────────────────────
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+</IfModule>
+
+# ── Compression ──────────────────────────────────────────────
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+</IfModule>
+
+# ── Default index ────────────────────────────────────────────
+DirectoryIndex login.php index.php
