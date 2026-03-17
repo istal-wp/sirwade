@@ -5,21 +5,23 @@ echo "======================================"
 echo "  BRIGHTPATH Loogistics — Boot"
 echo "======================================"
 
-# ── Resolve env vars (Railway uses MYSQL*, fallback to DB_*) ──
+# ── Resolve env vars ──────────────────────────────────────────
 HOST="${MYSQLHOST:-${DB_HOST:-localhost}}"
 PORT="${MYSQLPORT:-${DB_PORT:-3306}}"
 USER="${MYSQLUSER:-${DB_USER:-root}}"
 PASS="${MYSQLPASSWORD:-${DB_PASS:-}}"
-DB_NAME="${MYSQLDATABASE:-${DB_NAME:-loogistics}}"
+DB_NAME="${MYSQLDATABASE:-${MYSQL_DATABASE:-${DB_NAME:-loogistics}}}"
 
-echo "🔗 Connecting to MySQL at ${HOST}:${PORT} as ${USER}..."
+echo "🔗 MySQL host : $HOST"
+echo "🔗 MySQL port : $PORT"
+echo "🔗 MySQL user : $USER"
+echo "🔗 MySQL db   : $DB_NAME"
 
 # ── Wait for MySQL to be ready ───────────────────────────────
 echo "⏳ Waiting for MySQL..."
 MAX_TRIES=60
 COUNT=0
-until mysql -h "$HOST" -P "$PORT" -u "$USER" -p"$PASS" \
-      -e "SELECT 1" > /dev/null 2>&1; do
+until mysqladmin ping -h "$HOST" -P "$PORT" -u "$USER" --password="$PASS" --silent 2>/dev/null; do
   COUNT=$((COUNT+1))
   if [ $COUNT -ge $MAX_TRIES ]; then
     echo "❌ MySQL did not become available in time. Exiting."
@@ -32,16 +34,16 @@ echo "✅ MySQL is ready."
 
 # ── Create database if it doesn't exist ─────────────────────
 echo "🗄  Ensuring database '$DB_NAME' exists..."
-mysql -h "$HOST" -P "$PORT" -u "$USER" -p"$PASS" \
+mysql -h "$HOST" -P "$PORT" -u "$USER" --password="$PASS" \
       -e "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 # ── Import schema if tables don't exist ─────────────────────
-TABLE_COUNT=$(mysql -h "$HOST" -P "$PORT" -u "$USER" -p"$PASS" \
+TABLE_COUNT=$(mysql -h "$HOST" -P "$PORT" -u "$USER" --password="$PASS" \
       -se "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_NAME}';" 2>/dev/null || echo "0")
 
 if [ "$TABLE_COUNT" -lt "5" ]; then
   echo "📦 Importing database schema..."
-  mysql -h "$HOST" -P "$PORT" -u "$USER" -p"$PASS" \
+  mysql -h "$HOST" -P "$PORT" -u "$USER" --password="$PASS" \
         "$DB_NAME" < /var/www/html/loogistics.sql
   echo "✅ Schema imported successfully."
 else
