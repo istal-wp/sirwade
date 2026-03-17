@@ -6,7 +6,7 @@ echo "  BRIGHTPATH Loogistics — Boot"
 echo "======================================"
 
 # ── Wait for MySQL to be ready ──────────────────────────────
-echo "⏳ Waiting for MySQL at ${DB_HOST:-localhost}:${DB_PORT:-3306}..."
+echo "⏳ Waiting for MySQL at ${MYSQLHOST:-localhost}:${MYSQLPORT:-3306}..."
 MAX_TRIES=60
 COUNT=0
 until mysql -h "${MYSQLHOST:-localhost}" -P "${MYSQLPORT:-3306}" \
@@ -22,22 +22,22 @@ until mysql -h "${MYSQLHOST:-localhost}" -P "${MYSQLPORT:-3306}" \
 done
 echo "✅ MySQL is ready."
 
-# ── Create database if it doesn't exist ────────────────────
-DB_NAME="${DB_NAME:-loogistics}"
+# ── Create database if needed ───────────────────────────────
+DB_NAME="${MYSQLDATABASE:-railway}"
 echo "🗄  Ensuring database '$DB_NAME' exists..."
-mysql -h "${DB_HOST:-localhost}" -P "${DB_PORT:-3306}" \
-      -u "${DB_USER:-root}" -p"${DB_PASS:-}" \
+mysql -h "${MYSQLHOST:-localhost}" -P "${MYSQLPORT:-3306}" \
+      -u "${MYSQLUSER:-root}" -p"${MYSQLPASSWORD:-}" \
       -e "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 # ── Import schema if tables don't exist ────────────────────
-TABLE_COUNT=$(mysql -h "${DB_HOST:-localhost}" -P "${DB_PORT:-3306}" \
-      -u "${DB_USER:-root}" -p"${DB_PASS:-}" \
+TABLE_COUNT=$(mysql -h "${MYSQLHOST:-localhost}" -P "${MYSQLPORT:-3306}" \
+      -u "${MYSQLUSER:-root}" -p"${MYSQLPASSWORD:-}" \
       -se "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_NAME}';" 2>/dev/null || echo "0")
 
 if [ "$TABLE_COUNT" -lt "5" ]; then
   echo "📦 Importing database schema..."
-  mysql -h "${DB_HOST:-localhost}" -P "${DB_PORT:-3306}" \
-        -u "${DB_USER:-root}" -p"${DB_PASS:-}" \
+  mysql -h "${MYSQLHOST:-localhost}" -P "${MYSQLPORT:-3306}" \
+        -u "${MYSQLUSER:-root}" -p"${MYSQLPASSWORD:-}" \
         "${DB_NAME}" < /var/www/html/loogistics.sql
   echo "✅ Schema imported successfully."
 else
